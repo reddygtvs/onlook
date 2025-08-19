@@ -14,6 +14,7 @@ function DraggableElement({
     style = {},
     outlineColor = 'red',
     initialSize = { width: 100, height: 100 },
+    animationTime = 0,
     ...rest
 }: {
     elementId: string,
@@ -27,6 +28,7 @@ function DraggableElement({
     style?: React.CSSProperties,
     outlineColor?: string,
     initialSize?: { width: number, height: number },
+    animationTime?: number,
     [key: string]: any
 }) {
     const isSelected = selectedElement === elementId;
@@ -35,6 +37,7 @@ function DraggableElement({
         height: initialSize.height 
     });
     const [isResizing, setIsResizing] = React.useState(false);
+    const [isHovered, setIsHovered] = React.useState(false);
     type Corner = 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
     type ResizeOrigin = {
         mouseX: number;
@@ -110,19 +113,27 @@ function DraggableElement({
             className="absolute cursor-grab select-none draggable-text"
             data-element-id={elementId}
             style={{
-                zIndex: 1,
-                border: '1px solid transparent',
+                zIndex: isSelected ? 3 : isHovered ? 2 : 1,
+                border: isHovered && !isSelected ? '1px solid rgba(239, 68, 68, 0.3)' : '1px solid transparent',
                 outline: isSelected ? `2px solid ${outlineColor}` : 'none',
                 outlineOffset: '0px',
-                borderRadius: '1px',
+                borderRadius: '2px',
                 padding: 0,
                 minWidth: 0,
                 minHeight: 0,
                 width: size.width,
                 height: size.height,
+                transform: `${style.transform || ''} ${isHovered && !isSelected && draggedElement !== elementId ? 'scale(1.02)' : 'scale(1.0)'} ${
+                    draggedElement !== elementId ? `translateY(${Math.sin(animationTime / 1500 + elementId.charCodeAt(0)) * 4}px)` : ''
+                }`.trim(),
+                transition: draggedElement === elementId ? 'none' : 'all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1)',
+                boxShadow: isHovered ? '0 4px 12px rgba(239, 68, 68, 0.15)' : isSelected ? '0 2px 8px rgba(239, 68, 68, 0.2)' : 'none',
+                filter: isHovered && !isSelected ? 'brightness(1.05)' : 'brightness(1.0)',
                 ...style,
             }}
             onClick={() => setSelectedElement(elementId)}
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={() => setIsHovered(false)}
             onMouseDown={(e) => {
                 if ((e.target as HTMLElement).classList.contains('resize-handle')) return;
                 e.preventDefault();
@@ -135,23 +146,15 @@ function DraggableElement({
                     x: e.clientX - rect.left,
                     y: e.clientY - rect.top
                 });
-                element.style.opacity = '0.8';
+                element.style.opacity = '0.9';
                 element.style.cursor = 'grabbing';
-            }}
-            onMouseEnter={(e) => {
-                if (isSelected) {
-                    e.currentTarget.style.border = '1px solid #ccc';
-                }
-            }}
-            onMouseLeave={(e) => {
-                e.currentTarget.style.border = '1px solid transparent';
             }}
             {...rest}
         >
             <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 {children}
             </div>
-            {isSelected && (
+            {(isSelected || isHovered) && (
                 <>
                     <div
                         className="resize-handle"
@@ -165,7 +168,10 @@ function DraggableElement({
                             border: '2px solid #ef4444',
                             borderRadius: '50%',
                             cursor: 'nwse-resize',
-                            zIndex: 2,
+                            zIndex: 4,
+                            opacity: isSelected ? 1 : isHovered ? 0.6 : 0,
+                            transform: `scale(${isSelected ? 1 : isHovered ? 0.8 : 0})`,
+                            transition: 'all 0.2s cubic-bezier(0.4, 0.0, 0.2, 1)',
                         }}
                         onMouseDown={handleResizeMouseDown('top-left')}
                     />
@@ -181,7 +187,10 @@ function DraggableElement({
                             border: '2px solid #ef4444',
                             borderRadius: '50%',
                             cursor: 'nesw-resize',
-                            zIndex: 2,
+                            zIndex: 4,
+                            opacity: isSelected ? 1 : isHovered ? 0.6 : 0,
+                            transform: `scale(${isSelected ? 1 : isHovered ? 0.8 : 0})`,
+                            transition: 'all 0.2s cubic-bezier(0.4, 0.0, 0.2, 1)',
                         }}
                         onMouseDown={handleResizeMouseDown('top-right')}
                     />
@@ -197,7 +206,10 @@ function DraggableElement({
                             border: '2px solid #ef4444',
                             borderRadius: '50%',
                             cursor: 'nesw-resize',
-                            zIndex: 2,
+                            zIndex: 4,
+                            opacity: isSelected ? 1 : isHovered ? 0.6 : 0,
+                            transform: `scale(${isSelected ? 1 : isHovered ? 0.8 : 0})`,
+                            transition: 'all 0.2s cubic-bezier(0.4, 0.0, 0.2, 1)',
                         }}
                         onMouseDown={handleResizeMouseDown('bottom-left')}
                     />
@@ -213,7 +225,10 @@ function DraggableElement({
                             border: '2px solid #ef4444',
                             borderRadius: '50%',
                             cursor: 'nwse-resize',
-                            zIndex: 2,
+                            zIndex: 4,
+                            opacity: isSelected ? 1 : isHovered ? 0.6 : 0,
+                            transform: `scale(${isSelected ? 1 : isHovered ? 0.8 : 0})`,
+                            transition: 'all 0.2s cubic-bezier(0.4, 0.0, 0.2, 1)',
                         }}
                         onMouseDown={handleResizeMouseDown('bottom-right')}
                     />
@@ -227,6 +242,7 @@ export function DirectEditingInteractive() {
     const [selectedElement, setSelectedElement] = useState<string | null>('face1');
     const [draggedElement, setDraggedElement] = useState<string | null>(null);
     const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+    const [animationTime, setAnimationTime] = useState(0);
 
     const handleMouseMove = (e: MouseEvent) => {
         if (!draggedElement) return;
@@ -270,6 +286,18 @@ export function DirectEditingInteractive() {
         }
     };
 
+    // Animation loop for floating effect
+    useEffect(() => {
+        let animationFrame: number;
+        const updateAnimation = () => {
+            setAnimationTime(Date.now());
+            animationFrame = requestAnimationFrame(updateAnimation);
+        };
+        animationFrame = requestAnimationFrame(updateAnimation);
+        
+        return () => cancelAnimationFrame(animationFrame);
+    }, []);
+
     useEffect(() => {
         document.addEventListener('mousedown', handleClickOutside);
         document.addEventListener('mousemove', handleMouseMove);
@@ -308,6 +336,7 @@ export function DirectEditingInteractive() {
                             setDraggedElement={setDraggedElement}
                             dragOffset={dragOffset}
                             setDragOffset={setDragOffset}
+                            animationTime={animationTime}
                             style={{ top: '170px', right: '6px', width: 60, height: 100 }}
                         >
                             <Illustrations.VinoBaguette />
@@ -320,6 +349,7 @@ export function DirectEditingInteractive() {
                             setDraggedElement={setDraggedElement}
                             dragOffset={dragOffset}
                             setDragOffset={setDragOffset}
+                            animationTime={animationTime}
                             style={{ top: '190px', left: '50px', width: 60, height: 100, transform: 'rotate(-10deg)' }}
                         >
                             <Illustrations.VinoBottle />
@@ -332,6 +362,7 @@ export function DirectEditingInteractive() {
                             setDraggedElement={setDraggedElement}
                             dragOffset={dragOffset}
                             setDragOffset={setDragOffset}
+                            animationTime={animationTime}
                             style={{ top: '200px', left: '2px', width: 46, height: 70 }}
                         >
                             <Illustrations.VinoPlant />
@@ -344,6 +375,7 @@ export function DirectEditingInteractive() {
                             setDraggedElement={setDraggedElement}
                             dragOffset={dragOffset}
                             setDragOffset={setDragOffset}
+                            animationTime={animationTime}
                             style={{ top: '280px', left: '15px', width: 40, height: 80, transform: 'rotate(-20deg)' }}
                         >
                             <Illustrations.VinoGlass />
@@ -356,6 +388,7 @@ export function DirectEditingInteractive() {
                             setDraggedElement={setDraggedElement}
                             dragOffset={dragOffset}
                             setDragOffset={setDragOffset}
+                            animationTime={animationTime}
                             style={{ top: '310px', right: '18px', width: 80, height: 50 }}
                         >
                             <Illustrations.VinoGrapes />
@@ -368,6 +401,7 @@ export function DirectEditingInteractive() {
                             setDraggedElement={setDraggedElement}
                             dragOffset={dragOffset}
                             setDragOffset={setDragOffset}
+                            animationTime={animationTime}
                             style={{ top: '290px', right: '100px', width: 60, height: 80 }}
                         >
                             <Illustrations.VinoVase />
@@ -380,6 +414,7 @@ export function DirectEditingInteractive() {
                             setDraggedElement={setDraggedElement}
                             dragOffset={dragOffset}
                             setDragOffset={setDragOffset}
+                            animationTime={animationTime}
                             style={{ top: '184px', left: '120px', width: 50, height: 73 }}
                         >
                             <Illustrations.VinoPlant2 />
@@ -392,6 +427,7 @@ export function DirectEditingInteractive() {
                             setDraggedElement={setDraggedElement}
                             dragOffset={dragOffset}
                             setDragOffset={setDragOffset}
+                            animationTime={animationTime}
                             style={{ top: '320px', left: '80px', width: 60, height: 40 }}
                         >
                             <Illustrations.VinoCheese />
@@ -404,6 +440,7 @@ export function DirectEditingInteractive() {
                             setDraggedElement={setDraggedElement}
                             dragOffset={dragOffset}
                             setDragOffset={setDragOffset}
+                            animationTime={animationTime}
                             style={{ top: '290px', right: '165px', width: 40, height:60, transform: 'rotate(180deg)' }}
                         >
                             <Illustrations.VinoSpoon />
@@ -416,6 +453,7 @@ export function DirectEditingInteractive() {
                             setDraggedElement={setDraggedElement}
                             dragOffset={dragOffset}
                             setDragOffset={setDragOffset}
+                            animationTime={animationTime}
                             style={{ top: '260px', right: '60px', width: 70, height: 30, transform: 'rotate(-140deg)' }}
                         >
                             <Illustrations.VinoFork />
@@ -428,6 +466,7 @@ export function DirectEditingInteractive() {
                             setDraggedElement={setDraggedElement}
                             dragOffset={dragOffset}
                             setDragOffset={setDragOffset}
+                            animationTime={animationTime}
                             style={{ top: '266px', left: '104px', width: 80, height: 28 }}
                         >
                             <Illustrations.VinoPlate />
@@ -440,6 +479,7 @@ export function DirectEditingInteractive() {
                             setDraggedElement={setDraggedElement}
                             dragOffset={dragOffset}
                             setDragOffset={setDragOffset}
+                            animationTime={animationTime}
                             style={{ top: '260px', right: '0px', width: 50, height: 46 }}
                         >
                             <Illustrations.VinoOlives />
@@ -452,6 +492,7 @@ export function DirectEditingInteractive() {
                             setDraggedElement={setDraggedElement}
                             dragOffset={dragOffset}
                             setDragOffset={setDragOffset}
+                            animationTime={animationTime}
                             style={{ top: '200px', right: '130px', width: 60, height: 60 }}
                         >
                             <Illustrations.VinoFace />
@@ -464,6 +505,7 @@ export function DirectEditingInteractive() {
                             setDraggedElement={setDraggedElement}
                             dragOffset={dragOffset}
                             setDragOffset={setDragOffset}
+                            animationTime={animationTime}
                             style={{ top: '180px', right: '70px', width: 50, height: 70, transform: 'rotate(-10deg)' }}
                         >
                             <Illustrations.VinoGlass2 />

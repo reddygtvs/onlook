@@ -1,7 +1,68 @@
 import { Icons } from '@onlook/ui/icons';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 
 export function ComponentsBlock() {
+    // Component cycling state
+    const [selectedComponentIdx, setSelectedComponentIdx] = useState(0);
+    const [displayedComponentIdx, setDisplayedComponentIdx] = useState(0);
+    const [lastUserInteraction, setLastUserInteraction] = useState(Date.now());
+    const [isTransitioning, setIsTransitioning] = useState(false);
+    const [hasInitialized, setHasInitialized] = useState(false);
+    
+    // Component data
+    const components = [
+        { label: 'Calendar', selected: false },
+        { label: 'Card', selected: false },
+        { label: 'Carousel', selected: false },
+        { label: 'Chart', selected: false },
+        { label: 'Table', selected: false },
+        { label: 'Weather', selected: false }
+    ];
+    
+    // Initialize on first render
+    useEffect(() => {
+        setHasInitialized(true);
+    }, []);
+
+    // Update displayed component with smooth, elegant transition
+    useEffect(() => {
+        if (hasInitialized && displayedComponentIdx !== selectedComponentIdx) {
+            setIsTransitioning(true);
+            
+            // Change content after fade out
+            const changeTimer = setTimeout(() => {
+                setDisplayedComponentIdx(selectedComponentIdx);
+                // Immediately start fade in
+                setTimeout(() => {
+                    setIsTransitioning(false);
+                }, 25); // Quick fade in
+            }, 175); // Wait for fade out
+            
+            return () => {
+                clearTimeout(changeTimer);
+            };
+        }
+    }, [selectedComponentIdx, displayedComponentIdx, hasInitialized]);
+    
+    // Auto-rotation effect
+    useEffect(() => {
+        const rotationInterval = setInterval(() => {
+            const now = Date.now();
+            // Only rotate if it's been 4 seconds since last user interaction
+            if (now - lastUserInteraction >= 4000) {
+                setSelectedComponentIdx((prev) => (prev + 1) % components.length);
+            }
+        }, 4000);
+        
+        return () => clearInterval(rotationInterval);
+    }, [lastUserInteraction, components.length]);
+    
+    // Handle manual component selection
+    const handleComponentSelect = (idx: number) => {
+        setSelectedComponentIdx(idx);
+        setLastUserInteraction(Date.now());
+    };
+    
     return (
         <div className="flex flex-col gap-4">
             {/* Custom Components Menu + Calendar Preview */}
@@ -10,20 +71,12 @@ export function ComponentsBlock() {
                 <div className="w-56 h-100 rounded-xl overflow-hidden absolute lg:left-1/20 md:left-1/30 left-1/8 top-12 flex flex-col items-center justify-start bg-black border-[0.5px] border-foreground-primary/20">
                     <p className="text-foreground-primary text-regular font-light w-full text-left px-3 py-2 border-b-[0.5px] border-foreground-primary/20">Components</p>
                     <div className="grid grid-cols-2 grid-rows-3 gap-6 w-full h-full p-4">
-                        {[
-                            { label: 'Calendar', selected: true },
-                            { label: 'Card', selected: false },
-                            { label: 'Carousel', selected: false },                            
-                            { label: 'Chart', selected: false },
-                            { label: 'Table', selected: false },
-                            { label: 'Weather', selected: false },
-                            
-                        ].map((item, idx) => (
-                            <div key={item.label} className="flex flex-col items-center w-full">
+                        {components.map((item, idx) => (
+                            <div key={item.label} className="flex flex-col items-center w-full cursor-pointer" onClick={() => handleComponentSelect(idx)}>
                                 <div
                                     className={
-                                        `w-24 h-24 rounded-xs mb-1.5 flex items-center justify-center bg-background-secondary transition-all ` +
-                                        (item.selected
+                                        `w-24 h-24 rounded-xs mb-1.5 flex items-center justify-center bg-background-secondary transition-all hover:bg-background-secondary/80 ` +
+                                        (idx === selectedComponentIdx
                                             ? 'outline outline-1 outline-purple-400 outline-offset-2'
                                             : '')
                                     }
@@ -199,58 +252,261 @@ export function ComponentsBlock() {
                         ))}
                     </div>
                 </div>
-                {/* Floating calendar preview */}
+                {/* Floating component preview */}
                 <div className="absolute md:right-1/30 right-1/10 top-30 z-10">
-                    <div className="rounded-xl border-1 border-purple-400 bg-black p-4 min-w-[240px]" style={{ fontSize: '0.6rem' }}>
-                        {/* Calendar header */}
-                        <div className="flex items-center justify-between mb-3 mx-2">
-                        <Icons.ArrowLeft className="w-4 h-4 text-foreground-primary" />
-                            <div className="flex gap-1">
-                                <button className="px-2 py-0.5 rounded bg-zinc-900 text-foreground-primary text-xs flex items-center">
-                                    {new Date().toLocaleString('default', { month: 'short' })} 
-                                    <svg width='8' height='8' className='ml-1'><path d='M2 3l2 2 2-2' stroke='white' strokeWidth='1' fill='none'/></svg>
+                    <div 
+                        className={`rounded-xl border-1 border-purple-400 bg-black p-4 min-w-[240px] transition-all duration-200 ease-out ${
+                            isTransitioning ? 'opacity-70 scale-[0.98]' : 'opacity-100 scale-100'
+                        }`} 
+                        style={{ 
+                            fontSize: '0.6rem'
+                        }}
+                    >
+                        {/* Render the currently displayed component */}
+                        {displayedComponentIdx === 0 && (
+                            <div className="w-full h-full flex flex-col">
+                                {/* Calendar header */}
+                                <div className="flex items-center justify-between mb-3 mx-2">
+                                    <Icons.ArrowLeft className="w-4 h-4 text-foreground-primary" />
+                                    <div className="flex gap-1">
+                                        <button className="px-2 py-0.5 rounded bg-zinc-900 text-foreground-primary text-xs flex items-center">
+                                            {new Date().toLocaleString('default', { month: 'short' })} 
+                                            <svg width='8' height='8' className='ml-1'><path d='M2 3l2 2 2-2' stroke='white' strokeWidth='1' fill='none'/></svg>
+                                        </button>
+                                        <button className="px-2 py-0.5 rounded bg-zinc-900 text-foreground-primary text-xs flex items-center">
+                                            {new Date().getFullYear()} 
+                                            <svg width='8' height='8' className='ml-1'><path d='M2 3l2 2 2-2' stroke='white' strokeWidth='1' fill='none'/></svg>
+                                        </button>
+                                    </div>
+                                    <Icons.ArrowRight className="w-4 h-4 text-foreground-primary" />
+                                </div>
+                                {/* Calendar grid */}
+                                <div className="grid grid-cols-7 gap-[2px] text-center text-zinc-400 text-xs mb-2 cursor-pointer">
+                                    {["Su","Mo","Tu","We","Th","Fr","Sa"].map((d, index) => <div key={`main-${d}-${index}`}>{d}</div>)}
+                                </div>
+                                <div className="grid grid-cols-7 gap-[2px] text-center cursor-pointer">
+                                    {(() => {
+                                        const today = new Date();
+                                        const currentMonth = today.getMonth();
+                                        const currentYear = today.getFullYear();
+                                        const firstDay = new Date(currentYear, currentMonth, 1);
+                                        const lastDay = new Date(currentYear, currentMonth + 1, 0);
+                                        const daysInMonth = lastDay.getDate();
+                                        const startingDay = firstDay.getDay();
+                                        
+                                        return Array.from({length: 42}, (_,i) => {
+                                            const day = i - startingDay + 1;
+                                            const isToday = day === today.getDate() && currentMonth === today.getMonth() && currentYear === today.getFullYear();
+                                            
+                                            if (day < 1 || day > daysInMonth) return <div key={i}></div>;
+                                            
+                                            return (
+                                                <div
+                                                    key={i}
+                                                    className={
+                                                        `py-[2px] rounded-full text-xs ` +
+                                                        (isToday ? 'bg-white text-black font-bold' : 'hover:bg-zinc-800 text-zinc-200')
+                                                    }
+                                                >
+                                                    {day}
+                                                </div>
+                                            );
+                                        });
+                                    })()}
+                                </div>
+                            </div>
+                        )}
+                        
+                        {/* Card preview */}
+                        {displayedComponentIdx === 1 && (
+                            <div>
+                                {/* Header */}
+                                <div className="flex items-center justify-between mb-3 mx-2">
+                                    <span className="text-white font-semibold text-xs">Login</span>
+                                    <span className="text-zinc-400 text-xs cursor-pointer hover:text-white transition-colors">Sign Up</span>
+                                </div>
+                                <p className="text-zinc-400 text-xs mb-3 mx-2">Enter your email below</p>
+                                
+                                <div className="space-y-2 mx-2">
+                                    <label className="text-zinc-200 text-xs">Email</label>
+                                    <div className="w-full px-2 py-1 bg-zinc-800 border border-zinc-700 rounded text-zinc-300 text-xs">m@example.com</div>
+                                </div>
+                                
+                                <div className="space-y-2 mx-2 mt-3">
+                                    <div className="flex items-center justify-between">
+                                        <label className="text-zinc-200 text-xs">Password</label>
+                                        <span className="text-zinc-500 text-[10px] cursor-pointer hover:text-zinc-300 transition-colors">Forgot?</span>
+                                    </div>
+                                    <div className="w-full px-2 py-1 bg-zinc-800 border border-zinc-700 rounded text-zinc-300 text-xs">••••••••</div>
+                                </div>
+                                
+                                <div className="mx-2 mt-3 space-y-2">
+                                    <button className="w-full py-1 bg-white text-black rounded text-xs font-medium hover:bg-zinc-100 transition-colors">Login</button>
+                                    <button className="w-full py-1 bg-zinc-900 border border-zinc-700 text-white rounded text-xs hover:bg-zinc-800 transition-colors">Login with Google</button>
+                                </div>
+                            </div>
+                        )}
+                        
+                        {/* Carousel preview */}
+                        {displayedComponentIdx === 2 && (
+                            <div className="flex items-center justify-center space-x-3 py-8">
+                                <button className="w-6 h-6 rounded-full bg-zinc-800 border border-zinc-600 flex items-center justify-center hover:bg-zinc-700 transition-colors">
+                                    <Icons.ArrowLeft className="w-3 h-3 text-foreground-primary" />
                                 </button>
-                                <button className="px-2 py-0.5 rounded bg-zinc-900 text-foreground-primary text-xs flex items-center">
-                                    {new Date().getFullYear()} 
-                                    <svg width='8' height='8' className='ml-1'><path d='M2 3l2 2 2-2' stroke='white' strokeWidth='1' fill='none'/></svg>
+                                
+                                <div className="flex space-x-1">
+                                    {[1, 2, 3].map((slide, idx) => (
+                                        <div 
+                                            key={slide} 
+                                            className={`w-16 h-12 rounded border transition-all duration-300 flex items-center justify-center text-sm font-light ${
+                                                idx === 1 ? 'bg-zinc-800 border-zinc-600 scale-105' : 'bg-zinc-900 border-zinc-700 scale-95 opacity-60'
+                                            }`}
+                                        >
+                                            {slide}
+                                        </div>
+                                    ))}
+                                </div>
+                                
+                                <button className="w-6 h-6 rounded-full bg-zinc-800 border border-zinc-600 flex items-center justify-center hover:bg-zinc-700 transition-colors">
+                                    <Icons.ArrowRight className="w-3 h-3 text-foreground-primary" />
                                 </button>
                             </div>
-                            <Icons.ArrowRight className="w-4 h-4 text-foreground-primary" />
-                        </div>
-                        {/* Calendar grid */}
-                        <div className="grid grid-cols-7 gap-[2px] text-center text-zinc-400 text-xs mb-2 cursor-pointer">
-                            {["Su","Mo","Tu","We","Th","Fr","Sa"].map((d, index) => <div key={`main-${d}-${index}`}>{d}</div>)}
-                        </div>
-                        <div className="grid grid-cols-7 gap-[2px] text-center cursor-pointer">
-                            {(() => {
-                                const today = new Date();
-                                const currentMonth = today.getMonth();
-                                const currentYear = today.getFullYear();
-                                const firstDay = new Date(currentYear, currentMonth, 1);
-                                const lastDay = new Date(currentYear, currentMonth + 1, 0);
-                                const daysInMonth = lastDay.getDate();
-                                const startingDay = firstDay.getDay();
+                        )}
+                        
+                        {/* Chart preview */}
+                        {displayedComponentIdx === 3 && (
+                            <div>
+                                <div className="mx-1 mb-3">
+                                    <h3 className="text-white text-xs font-semibold mb-1">Bar Chart</h3>
+                                    <p className="text-zinc-400 text-[10px]">Visitors last 3 months</p>
+                                </div>
                                 
-                                return Array.from({length: 42}, (_,i) => {
-                                    const day = i - startingDay + 1;
-                                    const isToday = day === today.getDate() && currentMonth === today.getMonth() && currentYear === today.getFullYear();
-                                    
-                                    if (day < 1 || day > daysInMonth) return <div key={i}></div>;
-                                    
-                                    return (
-                                        <div
-                                            key={i}
-                                            className={
-                                                `py-[2px] rounded-full text-xs ` +
-                                                (isToday ? 'bg-white text-black font-bold' : 'hover:bg-zinc-800 text-zinc-200')
-                                            }
-                                        >
-                                            {day}
+                                <div className="h-28 flex items-end justify-between space-x-[0.25px] bg-zinc-900/50 rounded mx-1 p-1">
+                                    {[12, 89, 34, 98, 67, 23, 95, 45, 99, 78, 8, 92, 56, 18, 97, 73, 41, 88, 62, 26, 94, 81, 35, 90, 47, 85, 29, 91, 64, 38, 96, 52, 87, 31, 93, 58].map((height, idx) => (
+                                        <div 
+                                            key={idx}
+                                            className="bg-teal-400 rounded-sm min-w-[3px] transition-all duration-300 hover:bg-teal-300" 
+                                            style={{ height: `${height}%` }}
+                                        />
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                        
+                        {/* Table preview */}
+                        {displayedComponentIdx === 4 && (
+                            <div className="mx-1">
+                                {/* Premium table with sleek design */}
+                                <div className="overflow-hidden rounded-lg bg-gradient-to-b from-zinc-900/90 to-black/95">
+                                    <table className="w-full">
+                                        <thead>
+                                            <tr className="border-b border-zinc-700/30 bg-zinc-800/40">
+                                                <th className="px-2.5 py-1.5 text-left text-[9px] font-medium text-zinc-400 uppercase tracking-wider">Name</th>
+                                                <th className="px-2.5 py-1.5 text-left text-[9px] font-medium text-zinc-400 uppercase tracking-wider">Age</th>
+                                                <th className="px-2.5 py-1.5 text-left text-[9px] font-medium text-zinc-400 uppercase tracking-wider">City</th>
+                                                <th className="px-2.5 py-1.5 text-center text-[9px] font-medium text-zinc-400 uppercase tracking-wider">Status</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {[
+                                                ['Sarah Chen', '28', 'SF', 'Active'],
+                                                ['Alex Rivera', '32', 'NYC', 'Active'],
+                                                ['Maya Patel', '29', 'Austin', 'Away'],
+                                                ['Josh Kim', '35', 'Seattle', 'Active'],
+                                                ['Emma Stone', '26', 'LA', 'Busy']
+                                            ].map((row, idx) => (
+                                                <tr key={idx} className="border-t border-zinc-700/20 hover:bg-zinc-800/30 transition-all duration-200">
+                                                    <td className="px-2.5 py-1.5 text-[9px] text-white font-medium">{row[0]}</td>
+                                                    <td className="px-2.5 py-1.5 text-[9px] text-zinc-300">{row[1]}</td>
+                                                    <td className="px-2.5 py-1.5 text-[9px] text-zinc-300">{row[2]}</td>
+                                                    <td className="px-2.5 py-1.5 text-center">
+                                                        <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[7px] font-medium ${
+                                                            row[3] === 'Active' 
+                                                                ? 'bg-emerald-900/50 text-emerald-300 border border-emerald-700/50' 
+                                                                : row[3] === 'Away'
+                                                                ? 'bg-amber-900/50 text-amber-300 border border-amber-700/50'
+                                                                : 'bg-blue-900/50 text-blue-300 border border-blue-700/50'
+                                                        }`}>
+                                                            <div className={`w-1 h-1 rounded-full mr-1 ${
+                                                                row[3] === 'Active' 
+                                                                    ? 'bg-emerald-400' 
+                                                                    : row[3] === 'Away'
+                                                                    ? 'bg-amber-400'
+                                                                    : 'bg-blue-400'
+                                                            }`} />
+                                                            {row[3]}
+                                                        </span>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        )}
+                        
+                        {/* Weather preview */}
+                        {displayedComponentIdx === 5 && (
+                            <div className="mx-2">
+                                {/* Current weather header */}
+                                <div className="flex items-center justify-between mb-3">
+                                    <div className="flex items-center space-x-2">
+                                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center">
+                                            <svg className="w-4 h-4" fill="white" viewBox="0 0 20 20">
+                                                <path fillRule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clipRule="evenodd" />
+                                            </svg>
                                         </div>
-                                    );
-                                });
-                            })()}
-                        </div>
+                                        <div>
+                                            <div className="text-lg font-light text-white">74°</div>
+                                            <div className="text-[8px] text-zinc-400 uppercase tracking-wider">Clear</div>
+                                        </div>
+                                    </div>
+                                    <div className="text-right">
+                                        <div className="text-[8px] text-zinc-500 uppercase tracking-wider mb-0.5">San Francisco</div>
+                                        <div className="text-[8px] text-zinc-400">2:34 PM</div>
+                                    </div>
+                                </div>
+                                
+                                {/* Weather details grid */}
+                                <div className="grid grid-cols-3 gap-1 mb-3 bg-zinc-900/40 rounded p-1.5">
+                                    <div className="text-center">
+                                        <div className="text-[8px] text-zinc-500 uppercase tracking-wider mb-0.5">Humidity</div>
+                                        <div className="text-[9px] text-white font-medium">68%</div>
+                                    </div>
+                                    <div className="text-center border-x border-zinc-700/50">
+                                        <div className="text-[8px] text-zinc-500 uppercase tracking-wider mb-0.5">Wind</div>
+                                        <div className="text-[9px] text-white font-medium">12 mph</div>
+                                    </div>
+                                    <div className="text-center">
+                                        <div className="text-[8px] text-zinc-500 uppercase tracking-wider mb-0.5">UV Index</div>
+                                        <div className="text-[9px] text-white font-medium">6</div>
+                                    </div>
+                                </div>
+                                
+                                {/* 7-day forecast */}
+                                <div className="space-y-0.5">
+                                    <div className="text-[8px] text-zinc-400 uppercase tracking-wider mb-1">7-Day Forecast</div>
+                                    {[
+                                        { day: 'Today', icon: '☀️', high: '74°', low: '58°' },
+                                        { day: 'Tue', icon: '⛅', high: '71°', low: '55°' },
+                                        { day: 'Wed', icon: '🌧️', high: '68°', low: '52°' },
+                                        { day: 'Thu', icon: '☀️', high: '76°', low: '60°' },
+                                        { day: 'Fri', icon: '⛅', high: '73°', low: '57°' }
+                                    ].map((forecast, idx) => (
+                                        <div key={idx} className="flex items-center justify-between py-0.5 hover:bg-zinc-800/30 rounded transition-colors">
+                                            <div className="flex items-center space-x-2 flex-1">
+                                                <span className="text-[8px] text-zinc-300 w-6">{forecast.day}</span>
+                                                <span className="text-[10px]">{forecast.icon}</span>
+                                            </div>
+                                            <div className="flex items-center space-x-1">
+                                                <span className="text-[8px] text-white font-medium">{forecast.high}</span>
+                                                <span className="text-[8px] text-zinc-500">{forecast.low}</span>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>

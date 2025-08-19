@@ -301,35 +301,34 @@ export function WhatCanOnlookDoSection() {
             {/* Grid extension section */}
             <div className="w-full max-w-6xl mx-auto py-32 px-8">
                 <h2 className="text-foreground-primary text-6xl text-right leading-[1.1] font-light mb-20">...and so<br />much more</h2>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-x-16 gap-y-20">
-                    <div>
-                        <div className="text-foreground-primary text-regularPlus mb-2 text-balance">Import from GitHub or locally</div>
-                        <div className="text-foreground-secondary text-regular text-balance">Bring your existing React / Next.js / Tailwind codebase and start building</div>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-x-16 gap-y-24">
+                    <div className="group">
+                        <div className="text-foreground-primary text-regularPlus mb-3 text-balance group-hover:text-foreground-primary/90 transition-colors duration-200">Import from GitHub or locally</div>
+                        <div className="text-foreground-secondary text-regular text-balance leading-relaxed">Bring your existing React / Next.js / Tailwind codebase and start building</div>
                     </div>
-                    <div>
-                        <div className="text-foreground-primary text-regularPlus mb-2 text-balance">Import from Figma</div>
-                        <div className="text-foreground-secondary text-regular text-balance">Make your designs come to life with a real working product</div>
+                    <div className="group">
+                        <div className="text-foreground-primary text-regularPlus mb-3 text-balance group-hover:text-foreground-primary/90 transition-colors duration-200">Import from Figma</div>
+                        <div className="text-foreground-secondary text-regular text-balance leading-relaxed">Make your designs come to life with a real working product</div>
                     </div>
-                    <div>
-                        <div className="text-foreground-primary text-regularPlus mb-2 text-balance">Publish your work</div>
-                        <div className="text-foreground-secondary text-regular text-balance">Attach a custom domain and share your work with the world</div>
+                    <div className="group">
+                        <div className="text-foreground-primary text-regularPlus mb-3 text-balance group-hover:text-foreground-primary/90 transition-colors duration-200">Publish your work</div>
+                        <div className="text-foreground-secondary text-regular text-balance leading-relaxed">Attach a custom domain and share your work with the world</div>
                     </div>
-                    <div>
-                        <div className="text-foreground-primary text-regularPlus mb-2 text-balance">Draw-in Layers</div>
-                        <div className="text-foreground-secondary text-regular text-balance">Trace divs and text directly in your designs and create code in real-time</div>
+                    <div className="group">
+                        <div className="text-foreground-primary text-regularPlus mb-3 text-balance group-hover:text-foreground-primary/90 transition-colors duration-200">Draw-in Layers</div>
+                        <div className="text-foreground-secondary text-regular text-balance leading-relaxed">Trace divs and text directly in your designs and create code in real-time</div>
                     </div>
-                    <div>
-                        <div className="text-foreground-primary text-regularPlus mb-2 text-balance">All your favorite hotkeys</div>
-                        <div className="text-foreground-secondary text-regular text-balance">
-                            <span className={`transition-all duration-250 mr-1 inline-block ${isShortcutAnimating ? 'blur-sm opacity-50 -translate-x-1' : 'blur-0 opacity-100 translate-x-0'}`}>
+                    <div className="group">
+                        <div className="text-foreground-primary text-regularPlus mb-3 text-balance group-hover:text-foreground-primary/90 transition-colors duration-200">All your favorite hotkeys</div>
+                        <div className="text-foreground-secondary text-regular text-balance leading-relaxed">
+                            <span className={`transition-all duration-300 ease-out inline-block min-w-[55px] ${isShortcutAnimating ? 'blur-sm opacity-30 scale-95' : 'blur-0 opacity-100 scale-100'}`}>
                                 {getKeyboardShortcut()}
-                            </span>
-                            and design lightning fast with all your favorite shortcuts
+                            </span> and design lightning fast with all your favorite shortcuts
                         </div>
                     </div>
-                    <div>
-                        <div className="text-foreground-primary text-regularPlus mb-2 text-balance">Use Images and media assets</div>
-                        <div className="text-foreground-secondary text-regular text-balance">Manage your graphics and images all from one place</div>
+                    <div className="group">
+                        <div className="text-foreground-primary text-regularPlus mb-3 text-balance group-hover:text-foreground-primary/90 transition-colors duration-200">Use Images and media assets</div>
+                        <div className="text-foreground-secondary text-regular text-balance leading-relaxed">Manage your graphics and images all from one place</div>
                     </div>
                 </div>
             </div>
