@@ -15,6 +15,7 @@ import { compressImageInBrowser } from '@onlook/utility';
 import { observer } from 'mobx-react-lite';
 import { useTranslations } from 'next-intl';
 import { useEffect, useRef, useState } from 'react';
+import { validateImageLimit } from '../context-pills/helpers';
 import { InputContextPills } from '../context-pills/input-context-pills';
 import { validateImageLimit } from '../context-pills/helpers';
 import { Suggestions, type SuggestionsRef } from '../suggestions';
@@ -186,12 +187,12 @@ export const ChatInput = observer(({
     };
 
     const handleImageEvent = async (file: File, displayName?: string) => {
-        // Check image limit before processing
         const currentImages = editorEngine.chat.context.context.filter(
             ctx => ctx.type === MessageContextType.IMAGE
         );
-        
-        if (!validateImageLimit(currentImages, (message) => toast.error(message), 1)) {
+        const { success, errorMessage } = validateImageLimit(currentImages, 1);
+        if (!success) {
+            toast.error(errorMessage);
             return;
         }
 
@@ -212,12 +213,13 @@ export const ChatInput = observer(({
 
     const handleScreenshot = async () => {
         try {
-            // Check image limit before processing
             const currentImages = editorEngine.chat.context.context.filter(
                 ctx => ctx.type === MessageContextType.IMAGE
             );
-            
-            if (!validateImageLimit(currentImages, (message) => toast.error(message), 1)) {
+
+            const { success, errorMessage } = validateImageLimit(currentImages, 1);
+            if (!success) {
+                toast.error(errorMessage);
                 return;
             }
 

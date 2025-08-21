@@ -1,3 +1,4 @@
+import { DefaultSettings } from '@onlook/constants';
 import { MessageContextType, type MessageContext } from '@onlook/models/chat';
 import { Icons } from '@onlook/ui/icons';
 import { getTruncatedFileName } from '@onlook/ui/utils';
@@ -45,18 +46,16 @@ export function getContextIcon(context: MessageContext) {
 }
 
 export function validateImageLimit(
-    currentImages: MessageContext[], 
-    onError?: (message: string) => void,
+    currentImages: MessageContext[],
     additionalCount: number = 0
-): boolean {
+): {
+    success: boolean;
+    errorMessage?: string;
+} {
     const totalCount = currentImages.length + additionalCount;
-    if (totalCount > DefaultSettings.CHAT_SETTINGS.maxImages) {
-        const remaining = DefaultSettings.CHAT_SETTINGS.maxImages - currentImages.length;
-        const errorMessage = remaining > 0 
-            ? `You can only add ${remaining} more image(s). Maximum ${DefaultSettings.CHAT_SETTINGS.maxImages} images allowed.`
-            : `Maximum ${DefaultSettings.CHAT_SETTINGS.maxImages} images allowed. Please remove an image before adding a new one.`;
-        onError?.(errorMessage);
-        return false;
+    const maxImages = DefaultSettings.CHAT_SETTINGS.maxImages;
+    if (totalCount > maxImages) {
+        return { success: false, errorMessage: `You can only add up to ${maxImages} images.` };
     }
-    return true;
+    return { success: true, errorMessage: undefined };
 }
