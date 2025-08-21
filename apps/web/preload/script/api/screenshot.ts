@@ -1,4 +1,14 @@
+// Screenshot implementation using DOM-to-canvas rendering
+// This approach ensures consistent frame-specific targeting without permission requirements
 export async function captureScreenshot(): Promise<{
+    mimeType: string;
+    data: string;
+}> {
+    return await captureScreenshotOriginal();
+}
+
+// DOM-based screenshot implementation
+async function captureScreenshotOriginal(): Promise<{
     mimeType: string;
     data: string;
 }> {
@@ -18,45 +28,10 @@ export async function captureScreenshot(): Promise<{
         canvas.width = viewportWidth;
         canvas.height = viewportHeight;
 
-        // Try modern getDisplayMedia API first (if available in this context)
-        if (navigator.mediaDevices && navigator.mediaDevices.getDisplayMedia) {
-            try {
-                const stream = await navigator.mediaDevices.getDisplayMedia({
-                    video: {
-                        width: viewportWidth,
-                        height: viewportHeight
-                    } as MediaTrackConstraints
-                });
+        // Warm up canvas context for font rendering
+        context.fillText('', 0, 0);
 
-                const video = document.createElement('video');
-                video.srcObject = stream;
-                video.autoplay = true;
-                video.muted = true;
-
-                await new Promise<void>((resolve) => {
-                    video.onloadedmetadata = () => {
-                        video.play();
-                        video.oncanplay = () => {
-                            context.drawImage(video, 0, 0, viewportWidth, viewportHeight);
-                            stream.getTracks().forEach(track => track.stop());
-                            resolve();
-                        };
-                    };
-                });
-
-                // Convert canvas to base64 string with compression
-                const base64 = await compressImage(canvas);
-                console.log(`Screenshot captured - Size: ~${Math.round((base64.length * 0.75) / 1024)} KB`);
-                return {
-                    mimeType: 'image/jpeg',
-                    data: base64,
-                };
-            } catch (displayError) {
-                console.log('getDisplayMedia failed, falling back to DOM rendering:', displayError);
-            }
-        }
-
-        // Fallback: DOM-to-canvas rendering
+        // Render DOM elements to canvas
         await renderDomToCanvas(context, viewportWidth, viewportHeight);
 
         // Convert canvas to base64 string with compression
@@ -69,7 +44,7 @@ export async function captureScreenshot(): Promise<{
     } catch (error) {
         console.error('Failed to capture screenshot:', error);
 
-        // Ultimate fallback: create a minimal screenshot
+        // Fallback: create minimal screenshot
         const canvas = document.createElement('canvas');
         const context = canvas.getContext('2d');
         if (context) {
@@ -97,8 +72,8 @@ export async function captureScreenshot(): Promise<{
 }
 
 async function compressImage(canvas: HTMLCanvasElement): Promise<string> {
-    const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB in bytes (base64 is ~1.33x larger)
-    const MAX_BASE64_SIZE = MAX_FILE_SIZE * 0.75; // Approximate base64 size limit
+    const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB limit
+    const MAX_BASE64_SIZE = MAX_FILE_SIZE * 0.75;
 
     // Try different quality levels and scaling factors
     const qualityLevels = [0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3];
@@ -129,7 +104,7 @@ async function compressImage(canvas: HTMLCanvasElement): Promise<string> {
         }
     }
 
-    // Fallback: very low quality and small size
+    // Fallback: low quality and small size
     const fallbackCanvas = document.createElement('canvas');
     const fallbackContext = fallbackCanvas.getContext('2d');
     if (fallbackContext) {
@@ -139,7 +114,7 @@ async function compressImage(canvas: HTMLCanvasElement): Promise<string> {
         return fallbackCanvas.toDataURL('image/jpeg', 0.2);
     }
 
-    // Ultimate fallback
+    // Final fallback
     return canvas.toDataURL('image/jpeg', 0.1);
 }
 
@@ -152,13 +127,13 @@ async function renderDomToCanvas(context: CanvasRenderingContext2D, width: numbe
     const elements = document.querySelectorAll('*');
     const visibleElements: { element: HTMLElement; rect: DOMRect; styles: CSSStyleDeclaration }[] = [];
 
-    // Filter and collect visible elements with their computed styles
+    // Collect visible elements with computed styles
     for (const element of elements) {
         if (element instanceof HTMLElement) {
             const rect = element.getBoundingClientRect();
             const styles = window.getComputedStyle(element);
 
-            // Check if element is visible and within viewport
+            // Check visibility and viewport bounds
             if (
                 rect.width > 0 &&
                 rect.height > 0 &&
