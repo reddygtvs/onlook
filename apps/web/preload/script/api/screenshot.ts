@@ -1,14 +1,24 @@
 // Screenshot implementation using DOM-to-canvas rendering
 // This approach ensures consistent frame-specific targeting without permission requirements
+
+// Constants
+const FALLBACK_CANVAS_WIDTH = 400;
+const FALLBACK_CANVAS_HEIGHT = 300;
+const TEXT_PADDING = 2;
+const LINE_HEIGHT_MULTIPLIER = 1.2;
+const TEXT_WRAP_MARGIN = 4;
+const FALLBACK_SCALE_FACTOR = 0.2;
+const FALLBACK_QUALITY = 0.2;
+const FINAL_FALLBACK_QUALITY = 0.1;
 export async function captureScreenshot(): Promise<{
     mimeType: string;
     data: string;
 }> {
-    return await captureScreenshotOriginal();
+    return captureScreenshotImpl();
 }
 
 // DOM-based screenshot implementation
-async function captureScreenshotOriginal(): Promise<{
+async function captureScreenshotImpl(): Promise<{
     mimeType: string;
     data: string;
 }> {
@@ -48,18 +58,18 @@ async function captureScreenshotOriginal(): Promise<{
         const canvas = document.createElement('canvas');
         const context = canvas.getContext('2d');
         if (context) {
-            canvas.width = 400;
-            canvas.height = 300;
+            canvas.width = FALLBACK_CANVAS_WIDTH;
+            canvas.height = FALLBACK_CANVAS_HEIGHT;
 
             // White background
             context.fillStyle = '#ffffff';
-            context.fillRect(0, 0, 400, 300);
+            context.fillRect(0, 0, FALLBACK_CANVAS_WIDTH, FALLBACK_CANVAS_HEIGHT);
 
             // Error message
             context.fillStyle = '#ff0000';
             context.font = '14px Arial, sans-serif';
             context.textAlign = 'center';
-            context.fillText('Screenshot unavailable', 200, 150);
+            context.fillText('Screenshot unavailable', FALLBACK_CANVAS_WIDTH / 2, FALLBACK_CANVAS_HEIGHT / 2);
 
             return {
                 mimeType: 'image/jpeg',
@@ -108,14 +118,14 @@ async function compressImage(canvas: HTMLCanvasElement): Promise<string> {
     const fallbackCanvas = document.createElement('canvas');
     const fallbackContext = fallbackCanvas.getContext('2d');
     if (fallbackContext) {
-        fallbackCanvas.width = canvas.width * 0.2;
-        fallbackCanvas.height = canvas.height * 0.2;
+        fallbackCanvas.width = canvas.width * FALLBACK_SCALE_FACTOR;
+        fallbackCanvas.height = canvas.height * FALLBACK_SCALE_FACTOR;
         fallbackContext.drawImage(canvas, 0, 0, fallbackCanvas.width, fallbackCanvas.height);
-        return fallbackCanvas.toDataURL('image/jpeg', 0.2);
+        return fallbackCanvas.toDataURL('image/jpeg', FALLBACK_QUALITY);
     }
 
     // Final fallback
-    return canvas.toDataURL('image/jpeg', 0.1);
+    return canvas.toDataURL('image/jpeg', FINAL_FALLBACK_QUALITY);
 }
 
 async function renderDomToCanvas(context: CanvasRenderingContext2D, width: number, height: number) {
@@ -212,14 +222,14 @@ async function renderElement(
             // Simple text wrapping
             const words = text.split(' ');
             let line = '';
-            let y = top + 2;
-            const lineHeight = fontSize * 1.2;
+            let y = top + TEXT_PADDING;
+            const lineHeight = fontSize * LINE_HEIGHT_MULTIPLIER;
 
             for (const word of words) {
                 const testLine = line + word + ' ';
                 const metrics = context.measureText(testLine);
-                if (metrics.width > width - 4 && line !== '') {
-                    context.fillText(line, left + 2, y);
+                if (metrics.width > width - TEXT_WRAP_MARGIN && line !== '') {
+                    context.fillText(line, left + TEXT_PADDING, y);
                     line = word + ' ';
                     y += lineHeight;
                     if (y > top + height) break;
@@ -228,7 +238,7 @@ async function renderElement(
                 }
             }
             if (line && y <= top + height) {
-                context.fillText(line, left + 2, y);
+                context.fillText(line, left + TEXT_PADDING, y);
             }
         }
     }

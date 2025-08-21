@@ -3,7 +3,6 @@ import { MessageContextType, type MessageContext } from '@onlook/models/chat';
 import { Icons } from '@onlook/ui/icons';
 import { getTruncatedFileName } from '@onlook/ui/utils';
 import { assertNever } from '@onlook/utility';
-import { DefaultSettings } from '@onlook/constants';
 import React from 'react';
 import { NodeIcon } from '../../../left-panel/layers-tab/tree/node-icon';
 
